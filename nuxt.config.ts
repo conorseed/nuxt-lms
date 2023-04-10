@@ -4,7 +4,7 @@ import vsharp from 'vite-plugin-vsharp';
 export default defineNuxtConfig({
   nitro: {
     prerender: {
-      routes: ['/landing'],
+      routes: ['/'],
     },
   },
   vite: {
