@@ -41,7 +41,17 @@ export type CourseOutline = Omit<
 };
 
 export default defineEventHandler(async (event) => {
-  const outline = await prisma.course.findFirst(courseSelect);
+  let outline;
+
+  try {
+    outline = await prisma.course.findFirst(courseSelect);
+  } catch (error) {
+    console.error(error);
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Database error',
+    });
+  }
 
   if (!outline) {
     throw createError({
