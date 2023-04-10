@@ -23,13 +23,15 @@
     <VideoPlayer v-if="lesson.videoId" :videoId="lesson.videoId" />
     <p>{{ lesson.text }}</p>
     <LessonCompleteButton
-      :model-value="isLessonComplete"
-      @update:model-value="toggleComplete"
+      v-if="user"
+      :model-value="isCompleted"
+      @update:model-value="courseProgress.toggleComplete"
     />
   </div>
 </template>
 
 <script setup>
+import { useCourseProgress } from '@/stores/courseProgress';
 /*
  * SETUP
  */
@@ -39,12 +41,13 @@ const lesson = await useLesson(
   route.params.chapterSlug,
   route.params.lessonSlug
 );
+const user = useSupabaseUser();
 
 definePageMeta({
   middleware: [
     async function ({ params }, from) {
       const course = await useCourse();
-      const chapter = course.chapters.find(
+      const chapter = course.value.chapters.find(
         (chapter) => chapter.slug === params.chapterSlug
       );
       if (!chapter) {
@@ -75,7 +78,7 @@ definePageMeta({
  * Create Vars
  */
 const chapter = computed(() => {
-  return course.chapters.find(
+  return course.value.chapters.find(
     (chapter) => chapter.slug === route.params.chapterSlug
   );
 });
@@ -90,7 +93,7 @@ const chapter = computed(() => {
  * Head
  */
 const title = computed(() => {
-  return `${lesson.value.title} - ${course.title}`;
+  return `${lesson.value.title} - ${course.value.title}`;
 });
 useHead({
   title,
@@ -99,26 +102,34 @@ useHead({
 /*
  * Lesson Progress
  */
-const progress = useLocalStorage('progress', []);
+const courseProgress = useCourseProgress();
+courseProgress.initialize();
+// const progress = useLocalStorage('progress', []);
 
-const isLessonComplete = computed(() => {
-  if (!progress.value[chapter.value.number - 1]) {
-    return false;
-  }
-
-  if (!progress.value[chapter.value.number - 1][lesson.value.number - 1]) {
-    return false;
-  }
-
-  return progress.value[chapter.value.number - 1][lesson.value.number - 1];
+const isCompleted = computed(() => {
+  return courseProgress.progress?.[route.params.chapterSlug]?.[
+    route.params.lessonSlug
+  ];
 });
 
-const toggleComplete = () => {
-  if (!progress.value[chapter.value.number - 1]) {
-    progress.value[chapter.value.number - 1] = [];
-  }
+// const isLessonComplete = computed(() => {
+//   if (!progress.value[chapter.value.number - 1]) {
+//     return false;
+//   }
 
-  progress.value[chapter.value.number - 1][lesson.value.number - 1] =
-    !isLessonComplete.value;
-};
+//   if (!progress.value[chapter.value.number - 1][lesson.value.number - 1]) {
+//     return false;
+//   }
+
+//   return progress.value[chapter.value.number - 1][lesson.value.number - 1];
+// });
+
+// const toggleComplete = () => {
+//   if (!progress.value[chapter.value.number - 1]) {
+//     progress.value[chapter.value.number - 1] = [];
+//   }
+
+//   progress.value[chapter.value.number - 1][lesson.value.number - 1] =
+//     !isLessonComplete.value;
+// };
 </script>
